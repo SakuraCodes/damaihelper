@@ -4,6 +4,8 @@ from time import sleep, time
 from pickle import dump, load
 from os.path import exists
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common import exceptions
 from selenium.webdriver.common.by import By
@@ -13,7 +15,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
 class Concert(object):
-    def __init__(self, date, session, price, real_name, nick_name, ticket_num, viewer_person, damai_url, target_url, driver_path):
+    def __init__(self, date, session, price, real_name, nick_name, ticket_num, viewer_person, damai_url, target_url):
         self.date = date  # 日期序号
         self.session = session  # 场次序号优先级
         self.price = price  # 票价序号优先级
@@ -27,7 +29,7 @@ class Concert(object):
         self.nick_name = nick_name  # 用户昵称
         self.damai_url = damai_url  # 大麦网官网网址
         self.target_url = target_url  # 目标购票网址
-        self.driver_path = driver_path  # 浏览器驱动地址
+        self.driver_path = Service(ChromeDriverManager().install())  # 浏览器驱动地址
         self.driver = None
 
     def isClassPresent(self, item, name, ret=False):
@@ -80,7 +82,7 @@ class Concert(object):
     def enter_concert(self):
         print(u'###打开浏览器，进入大麦网###')
         if not exists('cookies.pkl'):   # 如果不存在cookie.pkl,就获取一下
-            self.driver = webdriver.Chrome(executable_path=self.driver_path)
+            self.driver = webdriver.Chrome(service=self.driver_path)
             self.get_cookie()
             print(u'###成功获取Cookie，重启浏览器###')
             self.driver.quit()
@@ -100,8 +102,7 @@ class Concert(object):
         capa = DesiredCapabilities.CHROME
         # normal, eager, none
         capa["pageLoadStrategy"] = "eager"
-        self.driver = webdriver.Chrome(
-            executable_path=self.driver_path, options=options, desired_capabilities=capa)
+        self.driver = webdriver.Chrome(service=self.driver_path, options=options, desired_capabilities=capa)
         # 登录到具体抢购页面
         self.login()
         self.driver.refresh()
@@ -350,7 +351,7 @@ class Concert(object):
 
 if __name__ == '__main__':
     try:
-        with open('./config.json', 'r', encoding='utf-8') as f:
+        with open('./config/config.json', 'r', encoding='utf-8') as f:
             config = loads(f.read())
             # params: 场次优先级，票价优先级，实名者序号, 用户昵称， 购买票数， 官网网址， 目标网址, 浏览器驱动地址
         con = Concert(config['date'], config['sess'], config['price'], config['real_name'], config['nick_name'],
